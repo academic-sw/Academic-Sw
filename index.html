@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบสารสนเทศงานวัดและประเมินผล โรงเรียนเสาไห้ "วิมลวิทยานุกูล"</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script>
+tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sarabun:['Sarabun','sans-serif'] } } } }
+</script>
+<style>
+:root{
+  --primary:#10b981; --primary-dark:#059669; --primary-light:#d1fae5;
+  --secondary:#fbbf24; --secondary-dark:#f59e0b;
+  --light-bg:#f4faf7; --light-card:#ffffff; --light-text:#1e293b; --light-muted:#64748b; --light-border:#e2e8f0;
+  --dark-bg:#0b1220; --dark-card:#111c2e; --dark-text:#e2e8f0; --dark-muted:#94a3b8; --dark-border:#1e293b;
+  --sidebar-light:#ffffff; --sidebar-dark:#0f172a;
+  --sidebar-text-light:#334155; --sidebar-text-dark:#cbd5e1;
+  --tab-bg-light:#ffffff; --tab-bg-dark:#111c2e;
+  --tab-text-light:#334155; --tab-text-dark:#cbd5e1;
+  --bg:var(--light-bg); --card:var(--light-card); --text:var(--light-text);
+  --muted:var(--light-muted); --border:var(--light-border);
+  --sidebar-bg:var(--sidebar-light); --sidebar-text:var(--sidebar-text-light);
+  --tab-bg:var(--tab-bg-light); --tab-text:var(--tab-text-light);
+}
+html.dark{
+  --bg:var(--dark-bg); --card:var(--dark-card); --text:var(--dark-text);
+  --muted:var(--dark-muted); --border:var(--dark-border);
+  --sidebar-bg:var(--sidebar-dark); --sidebar-text:var(--sidebar-text-dark);
+  --tab-bg:var(--tab-bg-dark); --tab-text:var(--tab-text-dark);
+}
+*{ -webkit-tap-highlight-color: transparent; }
+html,body{ font-family:'Sarabun',sans-serif; }
+body{ background:var(--bg); color:var(--text); transition: background .3s, color .3s; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--border); border-radius:99px; }
+::-webkit-scrollbar-thumb:hover{ background:var(--muted); }
+.skeleton{ position:relative; overflow:hidden; background:color-mix(in srgb, var(--muted) 15%, transparent); border-radius:10px; }
+.skeleton::after{ content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--muted) 25%, transparent), transparent); animation:shimmer 1.4s infinite; }
+@keyframes shimmer{ 100%{ transform:translateX(100%); } }
+.nav-item{ display:flex; align-items:center; gap:.6rem; padding:.55rem .7rem; border-radius:.65rem; font-size:.875rem; color:var(--sidebar-text); transition:all .2s; cursor:pointer; width:100%; text-align:left; }
+.nav-item:hover{ background:color-mix(in srgb, var(--primary) 10%, transparent); color:var(--primary-dark); }
+html.dark .nav-item:hover{ color:var(--primary); }
+.nav-item.active{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; box-shadow:0 4px 12px -4px var(--primary); }
+.grad-btn{ background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; }
+.grad-btn:hover{ filter:brightness(1.05); }
+.grad-yellow{ background:linear-gradient(135deg, var(--secondary), var(--secondary-dark)); color:#1e293b; }
+.card{ background:var(--card); border:1px solid var(--border); border-radius:1rem; }
+.fade-in{ animation:fadeIn .35s ease; }
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.badge{ display:inline-flex; align-items:center; gap:.3rem; }
+#mobileNav{ padding-bottom: env(safe-area-inset-bottom); }
+input,textarea,select{ font-family:inherit; }
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="overlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/50 z-30 backdrop-blur-sm" style="display:none"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="fixed left-0 top-0 h-full w-72 z-40 flex flex-col -translate-x-full lg:translate-x-0 transition-transform duration-300" style="background:var(--sidebar-bg); border-right:1px solid var(--border);">
+  <div class="p-4 border-b" style="border-color:var(--border);">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shrink-0 grad-btn shadow-sm" id="logoWrap">
+        <i class="fa-solid fa-school text-white text-xl" id="logoFallback"></i>
+        <img id="logoImg" alt="logo" class="w-full h-full object-contain" style="display:none">
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="text-[10px] uppercase tracking-wider" style="color:var(--muted);">ระบบสารสนเทศ</p>
+        <p class="font-bold text-sm leading-tight">งานวัดและประเมินผล</p>
+        <p class="text-[10px] leading-tight" style="color:var(--muted);">รร.เสาไห้ "วิมลวิทยานุกูล"</p>
+      </div>
+      <button onclick="closeSidebar()" class="lg:hidden w-8 h-8 rounded-lg flex items-center justify-center" style="color:var(--muted);"><i class="fa fa-xmark"></i></button>
+    </div>
+  </div>
+
+  <nav id="navContainer" class="flex-1 overflow-y-auto p-3 space-y-1"></nav>
+
+  <div class="p-3 border-t space-y-1.5" style="border-color:var(--border);">
+    <div id="syncStatusBadge" class="text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1.5 mb-1" style="background:var(--bg); color:var(--muted);">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span id="syncStatusText">กำลังเชื่อมต่อฐานข้อมูล...</span>
+    </div>
+    <button class="nav-item" id="themeToggleBtn" onclick="toggleDark()"><i class="fa-solid fa-moon"></i><span>โหมดมืด</span></button>
+    <button class="nav-item" id="adminBtn" onclick="openAdmin()" style="display:none"><i class="fa-solid fa-gear"></i><span>จัดการระบบ</span></button>
+    <button class="nav-item" id="loginBtn" onclick="openLogin()"><i class="fa-solid fa-right-to-bracket"></i><span>เข้าสู่ระบบ</span></button>
+    <button class="nav-item" id="logoutBtn" onclick="logout()" style="display:none"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>
+    <div class="pt-2 mt-2 border-t text-center text-[10px] leading-relaxed" style="border-color:var(--border); color:var(--muted);">
+      พัฒนาโดยกลุ่มบริหารงานวิชาการ<br>โรงเรียนเสาไห้ "วิมลวิทยานุกูล"
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="lg:ml-72 min-h-screen">
+  <div id="homePage" class="max-w-6xl mx-auto px-4 lg:px-8 pt-4 pb-28 lg:pb-10">
+    <!-- Top Bar Mobile -->
+    <div class="lg:hidden flex items-center justify-between mb-3">
+      <button onclick="openSidebar()" class="w-10 h-10 rounded-xl flex items-center justify-center card"><i class="fa fa-bars"></i></button>
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center grad-btn">
+          <i class="fa-solid fa-school text-white text-sm"></i>
+        </div>
+        <span class="text-sm font-bold">งานวัดและประเมินผล</span>
+      </div>
+      <button onclick="toggleDark()" class="w-10 h-10 rounded-xl flex items-center justify-center card" id="themeToggleMobile"><i class="fa-solid fa-moon"></i></button>
+    </div>
+
+    <!-- Hero Banner -->
+    <section class="relative overflow-hidden rounded-3xl p-6 lg:p-10 mb-6 shadow-md" style="background:linear-gradient(135deg, var(--primary), var(--primary-dark) 60%, var(--secondary));">
+      <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle at 20% 20%, #fff 1px, transparent 1px); background-size:24px 24px;"></div>
+      <div class="relative">
+        <span class="inline-block px-3 py-1 rounded-full text-[11px] font-semibold bg-white/20 text-white backdrop-blur">ระบบสารสนเทศโรงเรียน</span>
+        <h1 class="text-2xl lg:text-4xl font-extrabold text-white mt-3 leading-tight">ระบบสารสนเทศงานวัดและประเมินผล<br>โรงเรียนเสาไห้ "วิมลวิทยานุกูล"</h1>
+        <p class="text-white/90 mt-2 text-sm lg:text-base">ศูนย์รวมระบบงานวัดผล เอกสาร และเครื่องมือสำหรับครูและบุคลากร</p>
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button onclick="openHelp()" class="px-4 py-2 rounded-xl bg-white text-sm font-semibold flex items-center gap-2 shadow-sm" style="color:var(--primary-dark);"><i class="fa-solid fa-circle-question"></i> วิธีใช้งานระบบ</button>
+          <button onclick="scrollToNews()" class="px-4 py-2 rounded-xl bg-white/15 backdrop-blur text-white text-sm font-semibold flex items-center gap-2 border border-white/30"><i class="fa-solid fa-bullhorn"></i> ข่าวประชาสัมพันธ์</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Cards -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl grad-btn flex items-center justify-center shadow-sm"><i class="fa-solid fa-newspaper text-white"></i></div>
+        <div><p class="text-xs" style="color:var(--muted);">ข่าวทั้งหมด</p><p class="text-lg font-bold" id="statNews">0</p></div>
+      </div>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl grad-yellow flex items-center justify-center shadow-sm"><i class="fa-solid fa-layer-group"></i></div>
+        <div><p class="text-xs" style="color:var(--muted);">ระบบงาน</p><p class="text-lg font-bold" id="statSys">0</p></div>
+      </div>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl grad-btn flex items-center justify-center shadow-sm"><i class="fa-solid fa-users-rectangle text-white"></i></div>
+        <div><p class="text-xs" style="color:var(--muted);">กลุ่มงาน</p><p class="text-lg font-bold" id="statGrp">0</p></div>
+      </div>
+      <div class="card p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl grad-yellow flex items-center justify-center shadow-sm"><i class="fa-solid fa-signal"></i></div>
+        <div><p class="text-xs" style="color:var(--muted);">สถานะระบบ</p><p class="text-lg font-bold text-emerald-600">พร้อมใช้งาน</p></div>
+      </div>
+    </section>
+
+    <!-- News Section -->
+    <section id="newsSection">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xl lg:text-2xl font-extrabold flex items-center gap-2"><i class="fa-solid fa-bullhorn" style="color:var(--secondary-dark);"></i> ข่าวประชาสัมพันธ์</h2>
+        <span class="text-xs" style="color:var(--muted);" id="newsCount"></span>
+      </div>
+      <div id="newsList" class="space-y-4"></div>
+      <div id="newsPagination" class="flex items-center justify-center gap-2 mt-5"></div>
+    </section>
+  </div>
+
+  <!-- System Page (Iframe Viewer) -->
+  <div id="systemPage" class="fixed inset-0 lg:left-72 z-20 flex-col" style="background:var(--bg); display:none;">
+    <div class="h-12 flex items-center gap-2 px-3 shrink-0" style="background:var(--card); border-bottom:1px solid var(--border);">
+      <button onclick="goHome()" class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:color-mix(in srgb, var(--primary) 12%, transparent); color:var(--primary-dark);"><i class="fa-solid fa-arrow-left"></i></button>
+      <p class="font-semibold text-sm truncate" id="sysTitle"></p>
+      <button onclick="reloadSys()" class="ml-auto w-9 h-9 rounded-lg flex items-center justify-center" style="color:var(--muted);"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+    <div class="relative flex-1">
+      <iframe id="sysFrame" class="w-full h-full border-0 bg-white" title="system"></iframe>
+      <div id="sysLoading" class="absolute inset-0 flex items-center justify-center" style="background:var(--bg);">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-12 h-12 rounded-full border-4 animate-spin" style="border-color:color-mix(in srgb, var(--primary) 20%, transparent); border-top-color:var(--primary);"></div>
+          <p class="text-sm" style="color:var(--muted);">กำลังโหลดระบบ...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Bottom Nav Mobile -->
+<nav id="mobileNav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 backdrop-blur-lg" style="background:color-mix(in srgb, var(--card) 88%, transparent); border-top:1px solid var(--border);">
+  <div class="grid grid-cols-5">
+    <button onclick="goHome(); closeSidebar()" class="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium" style="color:var(--primary-dark);"><i class="fa-solid fa-house text-lg"></i>หน้าแรก</button>
+    <button onclick="openSidebar()" class="flex flex-col items-center gap-1 py-2.5 text-[10px]" style="color:var(--muted);"><i class="fa-solid fa-grip text-lg"></i>ระบบ</button>
+    <button onclick="toggleDark()" class="flex flex-col items-center gap-1 py-2.5 text-[10px]" style="color:var(--muted);"><i class="fa-solid fa-circle-half-stroke text-lg"></i>ธีม</button>
+    <button onclick="openLogin()" id="mobLoginBtn" class="flex flex-col items-center gap-1 py-2.5 text-[10px]" style="color:var(--muted);"><i class="fa-solid fa-user text-lg"></i>เข้าสู่ระบบ</button>
+    <button onclick="openAdmin()" id="mobAdminBtn" class="flex-col items-center gap-1 py-2.5 text-[10px]" style="color:var(--muted); display:none"><i class="fa-solid fa-gear text-lg"></i>จัดการ</button>
+  </div>
+</nav>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display:none">
+  <div class="card w-full max-w-sm p-6 fade-in">
+    <div class="flex flex-col items-center text-center mb-4">
+      <div class="w-14 h-14 rounded-2xl grad-btn flex items-center justify-center mb-3"><i class="fa-solid fa-lock text-white text-xl"></i></div>
+      <h2 class="text-lg font-bold">เข้าสู่ระบบผู้ดูแล</h2>
+      <p class="text-xs mt-1" style="color:var(--muted);">กรุณากรอกข้อมูลเพื่อเข้าใช้งาน</p>
+    </div>
+    <label class="text-xs font-semibold">ชื่อผู้ใช้</label>
+    <input id="loginUser" class="w-full mt-1 mb-3 px-3 py-2.5 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" placeholder="admin">
+    <label class="text-xs font-semibold">รหัสผ่าน</label>
+    <input id="loginPass" type="password" class="w-full mt-1 mb-4 px-3 py-2.5 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="flex gap-2">
+      <button onclick="closeLogin()" class="flex-1 py-2.5 rounded-xl font-semibold" style="background:var(--bg); border:1px solid var(--border);">ยกเลิก</button>
+      <button onclick="doLogin()" class="flex-1 py-2.5 rounded-xl font-semibold grad-btn flex items-center justify-center gap-2" id="loginSubmit">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div id="helpModal" class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display:none">
+  <div class="card w-full max-w-lg p-6 fade-in max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-circle-question" style="color:var(--primary);"></i> วิธีใช้งานระบบ</h2>
+      <button onclick="hideEl('helpModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color:var(--muted);"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="space-y-3 text-sm">
+      <div class="p-3 rounded-xl" style="background:var(--bg); border:1px solid var(--border);">
+        <p class="font-semibold flex items-center gap-2 mb-1"><i class="fa-solid fa-1 grad-btn w-5 h-5 rounded-full text-[10px] flex items-center justify-center text-white"></i> เข้าสู่ระบบ</p>
+        <p style="color:var(--muted);">กดปุ่ม "เข้าสู่ระบบ" ที่แถบด้านซ้าย หรือปุ่มผู้ใช้บนแถบล่าง (มือถือ) กรอกชื่อผู้ใช้ <b style="color:var(--text)">admin</b> และรหัสผ่าน <b style="color:var(--text)">admin752</b></p>
+      </div>
+      <div class="p-3 rounded-xl" style="background:var(--bg); border:1px solid var(--border);">
+        <p class="font-semibold flex items-center gap-2 mb-1"><i class="fa-solid fa-2 grad-btn w-5 h-5 rounded-full text-[10px] flex items-center justify-center text-white"></i> เปิดใช้งานระบบงาน</p>
+        <p style="color:var(--muted);">กดที่ชื่อระบบในเมนูด้านซ้าย ระบบจะแสดงเต็มพื้นที่ทันที ไม่เปิดแท็บใหม่</p>
+      </div>
+      <div class="p-3 rounded-xl" style="background:var(--bg); border:1px solid var(--border);">
+        <p class="font-semibold flex items-center gap-2 mb-1"><i class="fa-solid fa-3 grad-btn w-5 h-5 rounded-full text-[10px] flex items-center justify-center text-white"></i> บันทึกข้อมูลและอัปโหลดไฟล์</p>
+        <p style="color:var(--muted);">ข้อมูลจะถูกบันทึกลง Google Sheet และไฟล์ที่อัปโหลดจะถูกส่งไปยัง Google Drive Folder อัตโนมัติ</p>
+      </div>
+      <div class="p-3 rounded-xl" style="background:var(--bg); border:1px solid var(--border);">
+        <p class="font-semibold flex items-center gap-2 mb-1"><i class="fa-solid fa-4 grad-btn w-5 h-5 rounded-full text-[10px] flex items-center justify-center text-white"></i> เปลี่ยนโหมดมืด/สว่าง</p>
+        <p style="color:var(--muted);">กดปุ่มพระจันทร์/พระอาทิตย์ ที่แถบด้านซ้ายหรือแถบล่างมือถือ ระบบจะปรับสีตัวอักษรให้อัตโนมัติ</p>
+      </div>
+    </div>
+    <button onclick="hideEl('helpModal')" class="w-full mt-5 py-2.5 rounded-xl font-semibold grad-btn">เข้าใจแล้ว</button>
+  </div>
+</div>
+
+<!-- NEWS VIEW MODAL -->
+<div id="newsViewModal" class="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display:none">
+  <div class="card w-full max-w-2xl p-5 fade-in max-h-[90vh] overflow-y-auto" id="newsViewBody"></div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div id="adminModal" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm p-0 lg:p-6" style="display:none">
+  <div class="absolute inset-0 flex items-center justify-center">
+    <div class="w-full h-full lg:h-[92vh] lg:max-w-5xl lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden" style="background:var(--card);">
+      <div class="flex items-center justify-between p-4 shrink-0" style="border-bottom:1px solid var(--border);">
+        <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-gear" style="color:var(--primary);"></i> จัดการระบบ (Admin)</h2>
+        <button onclick="closeAdmin()" class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:var(--bg);"><i class="fa fa-xmark"></i></button>
+      </div>
+      <div class="flex overflow-x-auto shrink-0" style="border-bottom:1px solid var(--border);">
+        <button class="admin-tab px-4 py-3 text-sm font-semibold whitespace-nowrap" data-tab="news">ข่าวสาร</button>
+        <button class="admin-tab px-4 py-3 text-sm font-semibold whitespace-nowrap" data-tab="systems">ระบบ & เมนู</button>
+        <button class="admin-tab px-4 py-3 text-sm font-semibold whitespace-nowrap" data-tab="theme">ธีม & สี</button>
+        <button class="admin-tab px-4 py-3 text-sm font-semibold whitespace-nowrap" data-tab="logo">โลโก้</button>
+        <button class="admin-tab px-4 py-3 text-sm font-semibold whitespace-nowrap" data-tab="db">ฐานข้อมูล (Sheets/Drive)</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4" id="adminBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEWS FORM MODAL -->
+<div id="newsFormModal" class="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display:none">
+  <div class="card w-full max-w-2xl p-5 fade-in max-h-[92vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold" id="newsFormTitle">เพิ่มข่าว</h3>
+      <button onclick="hideEl('newsFormModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color:var(--muted);"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs font-semibold">หัวเรื่อง *</label>
+        <input id="nf_title" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);">
+      </div>
+      <div>
+        <label class="text-xs font-semibold">เนื้อหา *</label>
+        <textarea id="nf_content" rows="4" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);"></textarea>
+      </div>
+      
+      <!-- FILES SECTION (Upload to Google Drive) -->
+      <div>
+        <label class="text-xs font-semibold block mb-1">ไฟล์แนบ (อัปโหลดเข้า Google Drive หรือใส่ URL)</label>
+        <div class="space-y-2">
+          <!-- File 1 -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold w-12 text-slate-500">ไฟล์ 1:</span>
+            <input id="nf_f1" class="flex-1 px-3 py-2 rounded-xl outline-none text-xs" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" placeholder="URL ไฟล์ หรือกดปุ่มอัปโหลด">
+            <label class="px-3 py-2 rounded-xl text-xs font-semibold grad-btn cursor-pointer flex items-center gap-1.5 shrink-0" id="btnUploadF1">
+              <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลด
+              <input type="file" class="hidden" onchange="uploadAttachment(1, this)">
+            </label>
+          </div>
+          <!-- File 2 -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold w-12 text-slate-500">ไฟล์ 2:</span>
+            <input id="nf_f2" class="flex-1 px-3 py-2 rounded-xl outline-none text-xs" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" placeholder="URL ไฟล์ หรือกดปุ่มอัปโหลด">
+            <label class="px-3 py-2 rounded-xl text-xs font-semibold grad-btn cursor-pointer flex items-center gap-1.5 shrink-0" id="btnUploadF2">
+              <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลด
+              <input type="file" class="hidden" onchange="uploadAttachment(2, this)">
+            </label>
+          </div>
+          <!-- File 3 -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold w-12 text-slate-500">ไฟล์ 3:</span>
+            <input id="nf_f3" class="flex-1 px-3 py-2 rounded-xl outline-none text-xs" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" placeholder="URL ไฟล์ หรือกดปุ่มอัปโหลด">
+            <label class="px-3 py-2 rounded-xl text-xs font-semibold grad-btn cursor-pointer flex items-center gap-1.5 shrink-0" id="btnUploadF3">
+              <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลด
+              <input type="file" class="hidden" onchange="uploadAttachment(3, this)">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMAGES SECTION (Upload to Google Drive) -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-xs font-semibold">รูปภาพประกอบ (บันทึกลง Google Drive)</label>
+          <button onclick="addNewsImage()" class="text-xs px-2.5 py-1 rounded-lg font-semibold grad-yellow"><i class="fa fa-plus"></i> เพิ่มช่องรูป</button>
+        </div>
+        <div id="nf_images" class="space-y-2"></div>
+        <p class="text-[10px] mt-1" style="color:var(--muted);">กดปุ่มอัปโหลด ไฟล์รูปภาพจะถูกส่งไปยัง Google Drive Folder: 1ehgB_CLugTr96TwYLTbSISYyO4K5rGob อัตโนมัติ</p>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="hideEl('newsFormModal')" class="flex-1 py-2.5 rounded-xl font-semibold" style="background:var(--bg); border:1px solid var(--border);">ยกเลิก</button>
+      <button onclick="saveNews()" id="btnSaveNewsSubmit" class="flex-1 py-2.5 rounded-xl font-semibold grad-btn">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- SYSTEM FORM MODAL -->
+<div id="sysFormModal" class="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display:none">
+  <div class="card w-full max-w-md p-5 fade-in">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold" id="sysFormTitle">เพิ่มระบบ</h3>
+      <button onclick="hideEl('sysFormModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color:var(--muted);"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="text-xs font-semibold">ชื่อระบบ *</label><input id="sf_name" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);"></div>
+      <div><label class="text-xs font-semibold">URL เว็บไซต์ *</label><input id="sf_url" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);" placeholder="https://..."></div>
+      <div><label class="text-xs font-semibold">กลุ่มงาน</label><select id="sf_group" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);"></select></div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="hideEl('sysFormModal')" class="flex-1 py-2.5 rounded-xl font-semibold" style="background:var(--bg); border:1px solid var(--border);">ยกเลิก</button>
+      <button onclick="saveSys()" id="btnSaveSysSubmit" class="flex-1 py-2.5 rounded-xl font-semibold grad-btn">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP FORM MODAL -->
+<div id="grpFormModal" class="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm items-center justify-center p-4" style="display:none">
+  <div class="card w-full max-w-md p-5 fade-in">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-bold" id="grpFormTitle">เพิ่มกลุ่มงาน</h3>
+      <button onclick="hideEl('grpFormModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color:var(--muted);"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="text-xs font-semibold">ชื่อกลุ่มงาน *</label><input id="gf_name" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);"></div>
+      <div>
+        <label class="text-xs font-semibold">ไอคอน (Font Awesome)</label>
+        <select id="gf_icon" class="w-full mt-1 px-3 py-2 rounded-xl outline-none" style="background:var(--bg); border:1px solid var(--border); color:var(--text);">
+          <option value="fa-chart-line">fa-chart-line (กราฟ)</option>
+          <option value="fa-book-open">fa-book-open (หนังสือ)</option>
+          <option value="fa-folder-open">fa-folder-open (โฟลเดอร์)</option>
+          <option value="fa-file-lines">fa-file-lines (เอกสาร)</option>
+          <option value="fa-clipboard-check">fa-clipboard-check (ตรวจงาน)</option>
+          <option value="fa-database">fa-database (ฐานข้อมูล)</option>
+          <option value="fa-graduation-cap">fa-graduation-cap (หมวกปริญญา)</option>
+          <option value="fa-briefcase">fa-briefcase (กระเป๋าทำงาน)</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-5">
+      <button onclick="hideEl('grpFormModal')" class="flex-1 py-2.5 rounded-xl font-semibold" style="background:var(--bg); border:1px solid var(--border);">ยกเลิก</button>
+      <button onclick="saveGroup()" id="btnSaveGrpSubmit" class="flex-1 py-2.5 rounded-xl font-semibold grad-btn">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   การเชื่อมต่อ BACKEND (Google Apps Script / Sheets / Drive)
+   ========================================================================= */
+// หากนำไฟล์ index.html ขึ้น GitHub Pages ให้นำ Web App URL ที่ได้จากการ Deploy 
+// (แบบ Anyone / ทุกคนมีสิทธิ์เข้าถึง) มาใส่ในตัวแปร GAS_API_URL ด้านล่างนี้:
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzVKxf_aJZW64mCN4n9UIHb8lK7veS1EViq498Eotd1PbT5_ffpfwN7ivkmMcf-K8a1/exec'; 
+
+// โฟลเดอร์ Google Drive ID สำหรับอัปโหลดไฟล์
+const DRIVE_FOLDER_ID = '1ehgB_CLugTr96TwYLTbSISYyO4K5rGob';
+
+/* ==================== LOCAL CACHE & STORAGE ==================== */
+const LS = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ console.warn('LS full',e); } }
+};
+
+/* ==================== DEFAULTS ==================== */
+const DEFAULT_GROUPS = [
+  { id:'g1', name:'งานวัดและประเมินผล', icon:'fa-chart-line' },
+  { id:'g2', name:'กลุ่มสาระการเรียนรู้', icon:'fa-book-open' },
+  { id:'g3', name:'งานทะเบียน', icon:'fa-folder-open' },
+  { id:'g4', name:'เอกสาร & แบบฟอร์ม', icon:'fa-file-lines' },
+];
+const DEFAULT_SYSTEMS = [
+  { id:'s1', groupId:'g1', name:'ระบบบันทึกคะแนน', url:'https://www.example.com', order:0 },
+  { id:'s2', groupId:'g1', name:'ระบบประเมินผล', url:'https://www.example.com', order:1 },
+  { id:'s3', groupId:'g2', name:'คลังข้อสอบ', url:'https://www.example.com', order:0 },
+  { id:'s4', groupId:'g3', name:'ระบบทะเบียน', url:'https://www.example.com', order:0 },
+  { id:'s5', groupId:'g4', name:'แบบฟอร์มวัดผล', url:'https://www.example.com', order:0 },
+];
+const DEFAULT_NEWS = [
+  { id:'n1', title:'ประกาศกำหนดการสอบปลายภาค 1/2568', content:'ขอให้ครูผู้สอนตรวจสอบตารางสอบและแจ้งนักเรียนภายในวันที่ 15 ของเดือนนี้ การสอบจะเริ่มในสัปดาห์ที่ 3 ของเดือนกุมภาพันธ์', files:['','',''], images:[], date: Date.now()-86400000*2 },
+  { id:'n2', title:'แจ้งปรับปรุงระบบบันทึกคะแนน', content:'ระบบจะปิดปรับปรุงชั่วคราวในวันเสาร์ที่ 8 เวลา 20.00-23.00 น. ขออภัยในความไม่สะดวก', files:['','',''], images:[], date: Date.now()-86400000*5 },
+  { id:'n3', title:'ประชุมคณะกรรมการวัดผล ครั้งที่ 1/2568', content:'กำหนดประชุมในวันศุกร์ที่ 14 เวลา 15.30 น. ณ ห้องประชุมวิชาการ', files:['','',''], images:[], date: Date.now()-86400000*8 },
+];
+const DEFAULT_THEME = {
+  primary:'#10b981', primaryDark:'#059669', primaryLight:'#d1fae5',
+  secondary:'#fbbf24', secondaryDark:'#f59e0b',
+  lightBg:'#f4faf7', lightCard:'#ffffff', lightText:'#1e293b', lightMuted:'#64748b', lightBorder:'#e2e8f0',
+  darkBg:'#0b1220', darkCard:'#111c2e', darkText:'#e2e8f0', darkMuted:'#94a3b8', darkBorder:'#1e293b',
+  sidebarLight:'#ffffff', sidebarDark:'#0f172a',
+  sidebarTextLight:'#334155', sidebarTextDark:'#cbd5e1',
+  tabBgLight:'#ffffff', tabBgDark:'#111c2e',
+  tabTextLight:'#334155', tabTextDark:'#cbd5e1'
+};
+
+/* ==================== STATE ==================== */
+const state = {
+  logo: LS.get('si_logo', null),
+  news: LS.get('si_news', DEFAULT_NEWS),
+  groups: LS.get('si_groups', DEFAULT_GROUPS),
+  systems: LS.get('si_systems', DEFAULT_SYSTEMS),
+  theme: { ...DEFAULT_THEME, ...LS.get('si_theme', {}) },
+  dark: LS.get('si_dark', false),
+  isAdmin: sessionStorage.getItem('si_auth') === '1',
+  newsPage: 1,
+  currentSys: null,
+  editingNews: null,
+  editingSys: null,
+  editingGrp: null,
+  formImages: [],
+  activeAdminTab: 'news',
+  isOnlineGAS: false
+};
+
+const persist = {
+  news: ()=>LS.set('si_news', state.news),
+  groups: ()=>LS.set('si_groups', state.groups),
+  systems: ()=>LS.set('si_systems', state.systems),
+  theme: ()=>LS.set('si_theme', state.theme),
+  logo: ()=>LS.set('si_logo', state.logo),
+  dark: ()=>LS.set('si_dark', state.dark),
+};
+
+/* ==================== API BRIDGE ==================== */
+/**
+ * ฟังก์ชันสื่อสารกับ Backend (Google Apps Script หรือ Fetch API)
+ */
+async function callGAS(action, data = {}) {
+  // 1. ตรวจสอบว่ารันอยู่บน Google Apps Script Web App โดยตรงหรือไม่
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    return new Promise((resolve, reject) => {
+      const runner = google.script.run
+        .withSuccessHandler(res => resolve(res))
+        .withFailureHandler(err => reject(err));
+
+      switch(action) {
+        case 'getAllData': runner.getAllData(); break;
+        case 'saveNews': runner.saveNewsItem(data); break;
+        case 'deleteNews': runner.deleteNewsItem(data.id); break;
+        case 'saveSystem': runner.saveSystemItem(data); break;
+        case 'deleteSystem': runner.deleteSystemItem(data.id); break;
+        case 'updateSystemsOrder': runner.updateSystemsOrder(data); break;
+        case 'saveGroup': runner.saveGroupItem(data); break;
+        case 'deleteGroup': runner.deleteGroupItem(data.id); break;
+        case 'saveTheme': runner.saveThemeSettings(data); break;
+        case 'saveLogo': runner.saveLogoUrl(data.logo); break;
+        case 'uploadFile': runner.uploadFileToDrive(data.base64, data.fileName, data.mimeType); break;
+        default: reject(new Error('Unknown action'));
+      }
+    });
+  }
+
+  // 2. หากรันบน GitHub Pages และมีการระบุ GAS_API_URL
+  const apiUrl = GAS_API_URL || LS.get('si_custom_api_url', '');
+  if (apiUrl) {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action, data })
+    });
+    const json = await res.json();
+    if (json.success) return json.data;
+    throw new Error(json.error || 'Server error');
+  }
+
+  // 3. หากยังไม่ได้ตั้งค่า API URL ให้ใช้ Local Cache และแจ้งเตือน
+  console.info('กำลังทำงานในโหมด Offline/LocalStorage (ยังไม่ได้ระบุ GAS_API_URL)');
+  return null;
+}
+
+/**
+ * ดึงข้อมูลล่าสุดจาก Google Sheets ตอนเปิดหน้าเว็บ
+ */
+async function syncFromGoogleSheets() {
+  const badgeText = document.getElementById('syncStatusText');
+  const badgeWrap = document.getElementById('syncStatusBadge');
+
+  try {
+    const data = await callGAS('getAllData');
+    if (data) {
+      if (data.news && Array.isArray(data.news)) state.news = data.news;
+      if (data.groups && Array.isArray(data.groups)) state.groups = data.groups;
+      if (data.systems && Array.isArray(data.systems)) state.systems = data.systems;
+      if (data.theme) state.theme = { ...DEFAULT_THEME, ...data.theme };
+      if (data.logo !== undefined) state.logo = data.logo;
+
+      // บันทึกลง cache
+      persist.news(); persist.groups(); persist.systems(); persist.theme(); persist.logo();
+
+      state.isOnlineGAS = true;
+      if (badgeText) badgeText.textContent = 'ซิงค์ Google Sheets แล้ว';
+      if (badgeWrap) badgeWrap.className = 'text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1.5 mb-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300';
+    } else {
+      if (badgeText) badgeText.textContent = 'โหมดออฟไลน์ / LocalStorage';
+    }
+  } catch (err) {
+    console.warn('Sync failed:', err);
+    if (badgeText) badgeText.textContent = 'ออฟไลน์ (ใช้ข้อมูลในเครื่อง)';
+  }
+
+  applyTheme();
+  renderLogo();
+  renderNav();
+  renderHomeStats();
+  renderNews();
+}
+
+/* ==================== HELPERS ==================== */
+function showEl(id, display='flex'){ const el=document.getElementById(id); if(el) el.style.display = display; }
+function hideEl(id){ const el=document.getElementById(id); if(el) el.style.display = 'none'; }
+function uid(){ return 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function getCSSVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function toast(msg, icon='success'){
+  Swal.fire({ toast:true, position:'top-end', icon, title:msg, showConfirmButton:false, timer:2200, timerProgressBar:true, didOpen(t){ t.addEventListener('mouseenter', Swal.stopTimer); t.addEventListener('mouseleave', Swal.resumeTimer); } });
+}
+function swalBase(){
+  return Swal.mixin({ confirmButtonColor: getCSSVar('--primary')||'#10b981', cancelButtonColor:'#94a3b8', reverseButtons:true });
+}
+async function confirmDelete(title, text='ไม่สามารถกู้คืนได้'){
+  const r = await swalBase().fire({ icon:'warning', title, text, showCancelButton:true, confirmButtonText:'ลบข้อมูล', cancelButtonText:'ยกเลิก', confirmButtonColor:'#ef4444' });
+  return r.isConfirmed;
+}
+
+/* ==================== THEME ==================== */
+function applyTheme(){
+  const t = state.theme, s = document.documentElement.style;
+  const map = {
+    '--primary': t.primary, '--primary-dark': t.primaryDark, '--primary-light': t.primaryLight,
+    '--secondary': t.secondary, '--secondary-dark': t.secondaryDark,
+    '--light-bg': t.lightBg, '--light-card': t.lightCard, '--light-text': t.lightText, '--light-muted': t.lightMuted, '--light-border': t.lightBorder,
+    '--dark-bg': t.darkBg, '--dark-card': t.darkCard, '--dark-text': t.darkText, '--dark-muted': t.darkMuted, '--dark-border': t.darkBorder,
+    '--sidebar-light': t.sidebarLight, '--sidebar-dark': t.sidebarDark,
+    '--sidebar-text-light': t.sidebarTextLight, '--sidebar-text-dark': t.sidebarTextDark,
+    '--tab-bg-light': t.tabBgLight, '--tab-bg-dark': t.tabBgDark,
+    '--tab-text-light': t.tabTextLight, '--tab-text-dark': t.tabTextDark
+  };
+  for(const k in map) s.setProperty(k, map[k]);
+  document.documentElement.classList.toggle('dark', state.dark);
+  updateThemeUI();
+}
+function updateThemeUI(){
+  const dark = state.dark;
+  const icon = dark ? 'fa-sun' : 'fa-moon';
+  const label = dark ? 'โหมดสว่าง' : 'โหมดมืด';
+  const btn = document.getElementById('themeToggleBtn');
+  if(btn) btn.innerHTML = `<i class="fa-solid ${icon}"></i><span>${label}</span>`;
+  const m = document.getElementById('themeToggleMobile');
+  if(m) m.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+}
+function toggleDark(){
+  state.dark = !state.dark;
+  persist.dark();
+  applyTheme();
+}
+
+/* ==================== NAV ==================== */
+function renderNav(){
+  const nav = document.getElementById('navContainer');
+  let html = `<button class="nav-item" data-page="home" onclick="goHome()"><i class="fa-solid fa-house"></i><span>หน้าแรก</span></button>`;
+  state.groups.forEach(g=>{
+    const list = state.systems.filter(s=>s.groupId===g.id).sort((a,b)=>(a.order||0)-(b.order||0));
+    if(!list.length) return;
+    html += `<div class="mt-1">
+      <button class="nav-item" onclick="toggleGroup('${g.id}')" data-group="${g.id}">
+        <i class="fa-solid ${g.icon}" style="color:var(--primary);"></i>
+        <span class="flex-1 text-left font-medium">${esc(g.name)}</span>
+        <i class="fa-solid fa-chevron-down text-[10px] transition-transform" id="chev-${g.id}"></i>
+      </button>
+      <div id="grp-${g.id}" class="ml-2 pl-2 space-y-0.5" style="border-left:2px solid color-mix(in srgb, var(--primary) 25%, transparent);">
+        ${list.map(s=>`<button class="nav-item" data-sys="${s.id}" onclick="openSystem('${s.id}')" style="padding:.45rem .6rem; font-size:.8rem;">
+          <i class="fa-solid fa-angle-right text-[10px]" style="color:var(--muted);"></i>
+          <span class="flex-1">${esc(s.name)}</span>
+        </button>`).join('')}
+      </div>
+    </div>`;
+  });
+  nav.innerHTML = html;
+  highlightNav();
+}
+function highlightNav(){
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    if(el.dataset.sys) el.classList.toggle('active', el.dataset.sys===state.currentSys);
+    if(el.dataset.page==='home') el.classList.toggle('active', !state.currentSys && !document.getElementById('homePage').classList.contains('hidden'));
+  });
+}
+function toggleGroup(gid){
+  const box = document.getElementById('grp-'+gid);
+  const chev = document.getElementById('chev-'+gid);
+  if(!box) return;
+  const isHidden = box.style.display === 'none';
+  box.style.display = isHidden ? '' : 'none';
+  chev.style.transform = isHidden ? '' : 'rotate(-90deg)';
+}
+
+/* ==================== HOME / NEWS ==================== */
+function renderHomeStats(){
+  document.getElementById('statNews').textContent = state.news.length;
+  document.getElementById('statSys').textContent = state.systems.length;
+  document.getElementById('statGrp').textContent = state.groups.length;
+  document.getElementById('newsCount').textContent = `${state.news.length} ข่าว`;
+}
+
+function renderNews(){
+  const container = document.getElementById('newsList');
+  const pag = document.getElementById('newsPagination');
+  const sorted = [...state.news].sort((a,b)=>b.date-a.date);
+  const totalPages = Math.max(1, Math.ceil(sorted.length/5));
+  if(state.newsPage > totalPages) state.newsPage = totalPages;
+
+  const start = (state.newsPage-1)*5;
+  const items = sorted.slice(start, start+5);
+  if(!items.length){
+    container.innerHTML = `<div class="card p-10 text-center"><i class="fa-regular fa-newspaper text-4xl mb-2" style="color:var(--muted);"></i><p style="color:var(--muted);">ยังไม่มีข่าวประชาสัมพันธ์</p></div>`;
+  } else {
+    container.innerHTML = items.map(renderNewsCard).join('');
+  }
+  
+  if(totalPages <= 1){ pag.innerHTML = ''; return; }
+  let phtml = `<button onclick="gotoNewsPage(${state.newsPage-1})" ${state.newsPage===1?'disabled':''} class="w-9 h-9 rounded-lg flex items-center justify-center ${state.newsPage===1?'opacity-40':''}" style="background:var(--card); border:1px solid var(--border);"><i class="fa fa-chevron-left"></i></button>`;
+  for(let i=1;i<=totalPages;i++){
+    phtml += `<button onclick="gotoNewsPage(${i})" class="w-9 h-9 rounded-lg font-semibold text-sm ${i===state.newsPage?'grad-btn':'card'}">${i}</button>`;
+  }
+  phtml += `<button onclick="gotoNewsPage(${state.newsPage+1})" ${state.newsPage===totalPages?'disabled':''} class="w-9 h-9 rounded-lg flex items-center justify-center ${state.newsPage===totalPages?'opacity-40':''}" style="background:var(--card); border:1px solid var(--border);"><i class="fa fa-chevron-right"></i></button>`;
+  pag.innerHTML = phtml;
+}
+
+function renderNewsCard(n){
+  const imgs = (n.images||[]).filter(Boolean);
+  const hasFiles = (n.files||[]).some(Boolean);
+  return `<article class="card p-4 flex flex-col sm:flex-row gap-4 fade-in cursor-pointer hover:shadow-lg transition" onclick="openNewsView('${n.id}')">
+    <div class="w-full sm:w-44 h-32 shrink-0 rounded-xl overflow-hidden flex items-center justify-center" style="background:linear-gradient(135deg, color-mix(in srgb,var(--primary) 15%, transparent), color-mix(in srgb,var(--secondary) 20%, transparent));">
+      ${imgs[0]?`<img src="${esc(imgs[0])}" class="w-full h-full object-cover" loading="lazy" onerror="this.src=''; this.parentElement.innerHTML='<i class=\'fa-regular fa-image text-3xl\' style=\'color:var(--muted);\'></i>'">`:`<i class="fa-regular fa-image text-3xl" style="color:var(--muted);"></i>`}
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold grad-yellow"><i class="fa-regular fa-clock"></i> ${new Date(n.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})}</span>
+        ${hasFiles?`<span class="text-[10px] px-2 py-0.5 rounded-full font-semibold" style="background:color-mix(in srgb,var(--primary) 15%, transparent); color:var(--primary-dark);"><i class="fa fa-paperclip"></i> มีไฟล์แนบ</span>`:''}
+      </div>
+      <h3 class="font-bold text-base leading-snug line-clamp-2">${esc(n.title)}</h3>
+      <p class="text-sm mt-1 line-clamp-2" style="color:var(--muted);">${esc(n.content)}</p>
+      <div class="mt-2 flex items-center gap-1 text-xs font-semibold" style="color:var(--primary-dark);">อ่านเพิ่มเติม <i class="fa fa-arrow-right text-[10px]"></i></div>
+    </div>
+  </article>`;
+}
+
+function gotoNewsPage(p){
+  const totalPages = Math.max(1, Math.ceil(state.news.length/5));
+  if(p<1||p>totalPages) return;
+  state.newsPage = p;
+  renderNews();
+  document.getElementById('newsSection').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function scrollToNews(){ document.getElementById('newsSection').scrollIntoView({behavior:'smooth'}); }
+
+function openNewsView(id){
+  const n = state.news.find(x=>x.id===id);
+  if(!n) return;
+  const imgs = (n.images||[]).filter(Boolean);
+  const files = (n.files||[]).filter(Boolean);
+  const body = document.getElementById('newsViewBody');
+  body.innerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold grad-yellow"><i class="fa-regular fa-clock"></i> ${new Date(n.date).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})}</span>
+      <button onclick="hideEl('newsViewModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:var(--bg);"><i class="fa fa-xmark"></i></button>
+    </div>
+    <h2 class="text-xl font-extrabold mb-3">${esc(n.title)}</h2>
+    <p class="text-sm leading-relaxed whitespace-pre-wrap" style="color:var(--text);">${esc(n.content)}</p>
+    ${imgs.length?`<div class="grid grid-cols-2 gap-2 mt-4">${imgs.map(src=>`<img src="${esc(src)}" class="w-full h-44 object-cover rounded-xl" loading="lazy">`).join('')}</div>`:''}
+    ${files.length?`<div class="mt-4 pt-3" style="border-top:1px solid var(--border);">
+      <p class="text-xs font-semibold mb-2" style="color:var(--muted);">ไฟล์แนบเอกสาร</p>
+      <div class="flex flex-wrap gap-2">
+        ${files.map((f,i)=>`<a href="${esc(f)}" target="_blank" class="px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 grad-btn shadow-sm"><i class="fa-solid fa-file-arrow-down"></i> เปิดดูไฟล์ที่ ${i+1}</a>`).join('')}
+      </div>
+    </div>`:''}
+  `;
+  showEl('newsViewModal');
+}
+
+/* ==================== SYSTEM VIEW ==================== */
+function openSystem(id){
+  const s = state.systems.find(x=>x.id===id);
+  if(!s) return;
+  state.currentSys = id;
+  document.getElementById('homePage').style.display = 'none';
+  const sp = document.getElementById('systemPage');
+  sp.style.display = 'flex';
+  document.getElementById('sysTitle').textContent = s.name;
+  const iframe = document.getElementById('sysFrame');
+  const loading = document.getElementById('sysLoading');
+  loading.style.display = 'flex';
+  iframe.src = s.url || 'about:blank';
+  iframe.onload = ()=>loading.style.display='none';
+  closeSidebar();
+  highlightNav();
+}
+function goHome(){
+  state.currentSys = null;
+  document.getElementById('systemPage').style.display = 'none';
+  document.getElementById('homePage').style.display = '';
+  document.getElementById('sysFrame').src = 'about:blank';
+  highlightNav();
+  renderHomeStats(); renderNews();
+}
+function reloadSys(){
+  const iframe = document.getElementById('sysFrame');
+  const loading = document.getElementById('sysLoading');
+  loading.style.display = 'flex';
+  iframe.src = iframe.src;
+}
+
+/* ==================== SIDEBAR / LOGIN ==================== */
+function openSidebar(){
+  document.getElementById('sidebar').classList.remove('-translate-x-full');
+  document.getElementById('overlay').style.display = 'block';
+}
+function closeSidebar(){
+  if(window.innerWidth < 1024){
+    document.getElementById('sidebar').classList.add('-translate-x-full');
+    document.getElementById('overlay').style.display = 'none';
+  }
+}
+function openLogin(){
+  if(state.isAdmin){ toast('เข้าสู่ระบบอยู่แล้ว'); return; }
+  showEl('loginModal');
+  setTimeout(()=>document.getElementById('loginUser').focus(), 100);
+}
+function closeLogin(){ hideEl('loginModal'); }
+function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginSubmit');
+  btn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> กำลังตรวจสอบ';
+  btn.disabled = true;
+  setTimeout(()=>{
+    btn.innerHTML = 'เข้าสู่ระบบ'; btn.disabled = false;
+    if(u==='admin' && p==='admin752'){
+      state.isAdmin = true;
+      sessionStorage.setItem('si_auth','1');
+      closeLogin();
+      document.getElementById('loginUser').value = '';
+      document.getElementById('loginPass').value = '';
+      updateAuthUI();
+      toast('เข้าสู่ระบบสำเร็จ');
+    } else {
+      swalBase().fire({icon:'error', title:'ข้อมูลไม่ถูกต้อง', text:'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'});
+    }
+  }, 500);
+}
+async function logout(){
+  const r = await swalBase().fire({ icon:'question', title:'ออกจากระบบ?', text:'คุณต้องการออกจากระบบใช่หรือไม่', showCancelButton:true, confirmButtonText:'ออกจากระบบ', cancelButtonText:'ยกเลิก' });
+  if(!r.isConfirmed) return;
+  state.isAdmin = false;
+  sessionStorage.removeItem('si_auth');
+  closeAdmin();
+  updateAuthUI();
+  toast('ออกจากระบบแล้ว');
+}
+function updateAuthUI(){
+  const admin = state.isAdmin;
+  document.getElementById('loginBtn').style.display = admin ? 'none' : '';
+  document.getElementById('logoutBtn').style.display = admin ? '' : 'none';
+  document.getElementById('adminBtn').style.display = admin ? '' : 'none';
+  document.getElementById('mobLoginBtn').style.display = admin ? 'none' : 'flex';
+  document.getElementById('mobAdminBtn').style.display = admin ? 'flex' : 'none';
+}
+
+/* ==================== ADMIN PANEL ==================== */
+function openAdmin(){
+  if(!state.isAdmin){ openLogin(); return; }
+  showEl('adminModal','block');
+  renderAdminTab(state.activeAdminTab);
+  document.querySelectorAll('.admin-tab').forEach(t=>{
+    t.onclick = ()=>{ state.activeAdminTab = t.dataset.tab; renderAdminTab(t.dataset.tab); };
+    const active = t.dataset.tab===state.activeAdminTab;
+    t.style.color = active ? 'var(--primary-dark)' : 'var(--muted)';
+    t.style.borderBottom = active ? '3px solid var(--primary)' : '3px solid transparent';
+  });
+}
+function closeAdmin(){ hideEl('adminModal'); }
+
+function renderAdminTab(tab){
+  state.activeAdminTab = tab;
+  document.querySelectorAll('.admin-tab').forEach(t=>{
+    const active = t.dataset.tab===tab;
+    t.style.color = active ? 'var(--primary-dark)' : 'var(--muted)';
+    t.style.borderBottom = active ? '3px solid var(--primary)' : '3px solid transparent';
+  });
+  const body = document.getElementById('adminBody');
+  if(tab==='news') body.innerHTML = renderAdminNews();
+  else if(tab==='systems') body.innerHTML = renderAdminSystems();
+  else if(tab==='theme') body.innerHTML = renderAdminTheme();
+  else if(tab==='logo') body.innerHTML = renderAdminLogo();
+  else if(tab==='db') body.innerHTML = renderAdminDB();
+}
+
+/* -------- Admin: News -------- */
+function renderAdminNews(){
+  const sorted = [...state.news].sort((a,b)=>b.date-a.date);
+  return `<div class="flex items-center justify-between mb-3">
+    <p class="text-sm" style="color:var(--muted);">ทั้งหมด ${sorted.length} ข่าว (บันทึกใน Sheet: News)</p>
+    <button onclick="openNewsForm()" class="px-3.5 py-2 rounded-xl text-sm font-semibold grad-btn flex items-center gap-1.5"><i class="fa fa-plus"></i> เพิ่มข่าวใหม่</button>
+  </div>
+  <div class="overflow-x-auto rounded-xl" style="border:1px solid var(--border);">
+    <table class="w-full text-sm">
+      <thead style="background:var(--bg);">
+        <tr><th class="text-left p-3 font-semibold">หัวเรื่อง</th><th class="text-left p-3 font-semibold whitespace-nowrap">วันที่</th><th class="text-left p-3 font-semibold">ไฟล์/รูปภาพ</th><th class="text-right p-3 font-semibold">จัดการ</th></tr>
+      </thead>
+      <tbody>
+        ${sorted.map(n=>`<tr style="border-top:1px solid var(--border);">
+          <td class="p-3"><p class="font-semibold line-clamp-1">${esc(n.title)}</p></td>
+          <td class="p-3 whitespace-nowrap" style="color:var(--muted);">${new Date(n.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold" style="background:color-mix(in srgb,var(--primary) 15%, transparent); color:var(--primary-dark);">${(n.files||[]).filter(Boolean).length} ไฟล์</span> <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold grad-yellow">${(n.images||[]).filter(Boolean).length} รูป</span></td>
+          <td class="p-3 text-right whitespace-nowrap">
+            <button onclick="openNewsForm('${n.id}')" class="w-8 h-8 rounded-lg mr-1" style="background:color-mix(in srgb,var(--primary) 15%, transparent); color:var(--primary-dark);"><i class="fa fa-pen text-xs"></i></button>
+            <button onclick="deleteNews('${n.id}')" class="w-8 h-8 rounded-lg" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-trash text-xs"></i></button>
+          </td>
+        </tr>`).join('') || `<tr><td colspan="4" class="p-6 text-center" style="color:var(--muted);">ยังไม่มีข้อมูลข่าว</td></tr>`}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function openNewsForm(id){
+  state.editingNews = id || null;
+  const n = id ? state.news.find(x=>x.id===id) : null;
+  state.formImages = n ? [...(n.images||[])] : [];
+  document.getElementById('newsFormTitle').textContent = id ? 'แก้ไขข่าว' : 'เพิ่มข่าว';
+  document.getElementById('nf_title').value = n?.title || '';
+  document.getElementById('nf_content').value = n?.content || '';
+  document.getElementById('nf_f1').value = n?.files?.[0] || '';
+  document.getElementById('nf_f2').value = n?.files?.[1] || '';
+  document.getElementById('nf_f3').value = n?.files?.[2] || '';
+  renderNewsImages();
+  showEl('newsFormModal');
+}
+
+function renderNewsImages(){
+  const box = document.getElementById('nf_images');
+  if(!state.formImages.length){
+    box.innerHTML = `<p class="text-xs p-2 rounded-lg text-center" style="background:var(--bg); color:var(--muted);">ยังไม่มีรูปภาพ กดปุ่ม "+ เพิ่มช่องรูป" ด้านบน</p>`;
+    return;
+  }
+  box.innerHTML = state.formImages.map((src,i)=>`
+    <div class="flex items-center gap-2">
+      <div class="w-12 h-12 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style="background:var(--bg); border:1px solid var(--border);">
+        ${src?`<img src="${esc(src)}" class="w-full h-full object-cover" onerror="this.src=''">`:`<i class="fa fa-image" style="color:var(--muted);"></i>`}
+      </div>
+      <input value="${esc(src)}" onchange="state.formImages[${i}]=this.value; renderNewsImages()" placeholder="URL รูป หรือกดปุ่มอัปโหลดขวา" class="flex-1 px-3 py-2 rounded-xl outline-none text-xs" style="background:var(--bg); border:1px solid var(--border); color:var(--text);">
+      <label class="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer grad-btn shrink-0" title="อัปโหลดไป Google Drive">
+        <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+        <input type="file" accept="image/*" class="hidden" onchange="uploadNewsImage(${i}, this)">
+      </label>
+      <button onclick="state.formImages.splice(${i},1); renderNewsImages()" class="w-9 h-9 rounded-xl shrink-0" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-xmark text-xs"></i></button>
+    </div>`).join('');
+}
+
+function addNewsImage(){ state.formImages.push(''); renderNewsImages(); }
+
+// อัปโหลดไฟล์เอกสาร (PDF, DOC, Etc) ขึ้น Google Drive
+async function uploadAttachment(fileNum, input){
+  const file = input.files[0];
+  if(!file) return;
+  const labelBtn = document.getElementById('btnUploadF'+fileNum);
+  const oldHTML = labelBtn.innerHTML;
+  labelBtn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> กำลังอัปโหลด...';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await callGAS('uploadFile', {
+      base64: base64,
+      fileName: file.name,
+      mimeType: file.type
+    });
+
+    if(res && res.success) {
+      document.getElementById('nf_f'+fileNum).value = res.viewUrl || res.url;
+      toast(`อัปโหลดไฟล์ ${file.name} เข้า Google Drive สำเร็จ!`);
+    } else {
+      throw new Error(res?.error || 'Upload failed');
+    }
+  } catch(e) {
+    console.error(e);
+    toast('อัปโหลดไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    labelBtn.innerHTML = oldHTML;
+    input.value = '';
+  }
+}
+
+// อัปโหลดรูปภาพข่าวขึ้น Google Drive
+async function uploadNewsImage(i, input){
+  const file = input.files[0];
+  if(!file) return;
+  const labelBtn = input.parentElement;
+  const oldHTML = labelBtn.innerHTML;
+  labelBtn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i>';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await callGAS('uploadFile', {
+      base64: base64,
+      fileName: file.name,
+      mimeType: file.type
+    });
+
+    if(res && res.success) {
+      state.formImages[i] = res.url;
+      renderNewsImages();
+      toast('อัปโหลดรูปภาพเข้า Google Drive สำเร็จ!');
+    } else {
+      throw new Error(res?.error || 'Upload failed');
+    }
+  } catch(e){
+    console.error(e);
+    toast('อัปโหลดไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    labelBtn.innerHTML = oldHTML;
+    input.value = '';
+  }
+}
+
+async function saveNews(){
+  const title = document.getElementById('nf_title').value.trim();
+  const content = document.getElementById('nf_content').value.trim();
+  if(!title || !content){ toast('กรุณากรอกหัวเรื่องและเนื้อหา','warning'); return; }
+  
+  const files = ['nf_f1','nf_f2','nf_f3'].map(id=>document.getElementById(id).value.trim());
+  const images = state.formImages.filter(Boolean);
+  const btn = document.getElementById('btnSaveNewsSubmit');
+  btn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> กำลังบันทึก...';
+  btn.disabled = true;
+
+  const newsItem = {
+    id: state.editingNews || uid(),
+    title, content, files, images,
+    date: state.editingNews ? (state.news.find(x=>x.id===state.editingNews)?.date || Date.now()) : Date.now()
+  };
+
+  try {
+    await callGAS('saveNews', newsItem);
+    if(state.editingNews){
+      const idx = state.news.findIndex(x=>x.id===state.editingNews);
+      if(idx>=0) state.news[idx] = newsItem;
+    } else {
+      state.news.unshift(newsItem);
+    }
+    persist.news();
+    hideEl('newsFormModal');
+    renderAdminTab('news');
+    renderNews(); renderHomeStats();
+    toast('บันทึกข้อมูลข่าวสารลง Google Sheet สำเร็จ');
+  } catch(e) {
+    toast('เกิดข้อผิดพลาดในการบันทึก: '+e.message, 'error');
+  } finally {
+    btn.innerHTML = 'บันทึก'; btn.disabled = false;
+  }
+}
+
+async function deleteNews(id){
+  if(!await confirmDelete('ลบข่าวนี้?','ข้อมูลใน Google Sheet จะถูกลบถาวร')) return;
+  try {
+    await callGAS('deleteNews', { id });
+    state.news = state.news.filter(x=>x.id!==id);
+    persist.news();
+    renderAdminTab('news');
+    renderNews(); renderHomeStats();
+    toast('ลบข่าวเรียบร้อย');
+  } catch(e) {
+    toast('ลบไม่สำเร็จ: '+e.message, 'error');
+  }
+}
+
+/* -------- Admin: Systems -------- */
+function renderAdminSystems(){
+  return `<div class="flex items-center justify-between mb-3">
+    <p class="text-sm" style="color:var(--muted);">กลุ่มงาน ${state.groups.length} • ระบบงาน ${state.systems.length} (Sheet: Groups & Systems)</p>
+    <button onclick="openGrpForm()" class="px-3.5 py-2 rounded-xl text-sm font-semibold grad-yellow flex items-center gap-1.5"><i class="fa fa-plus"></i> เพิ่มกลุ่มงาน</button>
+  </div>
+  <div class="space-y-4">
+    ${state.groups.map(g=>{
+      const list = state.systems.filter(s=>s.groupId===g.id).sort((a,b)=>(a.order||0)-(b.order||0));
+      return `<div class="rounded-xl p-3" style="background:var(--bg); border:1px solid var(--border);">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fa-solid ${g.icon}" style="color:var(--primary);"></i>
+          <p class="font-bold flex-1">${esc(g.name)}</p>
+          <button onclick="openGrpForm('${g.id}')" class="w-7 h-7 rounded-lg" style="background:color-mix(in srgb,var(--primary) 15%, transparent); color:var(--primary-dark);"><i class="fa fa-pen text-xs"></i></button>
+          <button onclick="deleteGroup('${g.id}')" class="w-7 h-7 rounded-lg" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-trash text-xs"></i></button>
+          <button onclick="openSysForm(null,'${g.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold grad-btn"><i class="fa fa-plus"></i> เพิ่มระบบ</button>
+        </div>
+        <div class="space-y-1">
+          ${list.map((s,idx)=>`
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="background:var(--card); border:1px solid var(--border);">
+              <span class="text-[10px] font-mono px-1.5 py-0.5 rounded" style="background:var(--bg); color:var(--muted);">${idx+1}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold truncate">${esc(s.name)}</p>
+                <p class="text-[10px] truncate" style="color:var(--muted);">${esc(s.url)}</p>
+              </div>
+              <button onclick="moveSys('${s.id}',-1)" ${idx===0?'disabled style="opacity:.3"':''} class="w-7 h-7 rounded-lg" style="background:var(--bg);"><i class="fa fa-arrow-up text-xs"></i></button>
+              <button onclick="moveSys('${s.id}',1)" ${idx===list.length-1?'disabled style="opacity:.3"':''} class="w-7 h-7 rounded-lg" style="background:var(--bg);"><i class="fa fa-arrow-down text-xs"></i></button>
+              <button onclick="openSysForm('${s.id}')" class="w-7 h-7 rounded-lg" style="background:color-mix(in srgb,var(--primary) 15%, transparent); color:var(--primary-dark);"><i class="fa fa-pen text-xs"></i></button>
+              <button onclick="deleteSys('${s.id}')" class="w-7 h-7 rounded-lg" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-trash text-xs"></i></button>
+            </div>`).join('') || `<p class="text-xs p-2 text-center" style="color:var(--muted);">ยังไม่มีระบบในกลุ่มนี้</p>`}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function openSysForm(id, groupId){
+  state.editingSys = id || null;
+  const s = id ? state.systems.find(x=>x.id===id) : null;
+  document.getElementById('sysFormTitle').textContent = id ? 'แก้ไขระบบ' : 'เพิ่มระบบ';
+  document.getElementById('sf_name').value = s?.name || '';
+  document.getElementById('sf_url').value = s?.url || '';
+  const sel = document.getElementById('sf_group');
+  sel.innerHTML = state.groups.map(g=>`<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  sel.value = s?.groupId || groupId || state.groups[0]?.id;
+  showEl('sysFormModal');
+}
+
+async function saveSys(){
+  const name = document.getElementById('sf_name').value.trim();
+  const url = document.getElementById('sf_url').value.trim();
+  const groupId = document.getElementById('sf_group').value;
+  if(!name || !url){ toast('กรุณากรอกข้อมูลให้ครบ','warning'); return; }
+
+  const btn = document.getElementById('btnSaveSysSubmit');
+  btn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> กำลังบันทึก...';
+  btn.disabled = true;
+
+  let sItem;
+  if(state.editingSys){
+    sItem = { id: state.editingSys, name, url, groupId, order: state.systems.find(x=>x.id===state.editingSys)?.order || 0 };
+  } else {
+    const order = Math.max(-1, ...state.systems.filter(x=>x.groupId===groupId).map(x=>x.order||0))+1;
+    sItem = { id: uid(), groupId, name, url, order };
+  }
+
+  try {
+    await callGAS('saveSystem', sItem);
+    if(state.editingSys){
+      const idx = state.systems.findIndex(x=>x.id===state.editingSys);
+      if(idx>=0) state.systems[idx] = sItem;
+    } else {
+      state.systems.push(sItem);
+    }
+    persist.systems();
+    hideEl('sysFormModal');
+    renderAdminTab('systems');
+    renderNav(); renderHomeStats();
+    toast('บันทึกระบบลง Google Sheet สำเร็จ');
+  } catch(e) {
+    toast('บันทึกไม่สำเร็จ: '+e.message, 'error');
+  } finally {
+    btn.innerHTML = 'บันทึก'; btn.disabled = false;
+  }
+}
+
+async function deleteSys(id){
+  if(!await confirmDelete('ลบระบบนี้?','ระบบจะถูกนำออกจาก Google Sheet')) return;
+  try {
+    await callGAS('deleteSystem', { id });
+    state.systems = state.systems.filter(x=>x.id!==id);
+    persist.systems();
+    renderAdminTab('systems');
+    renderNav(); renderHomeStats();
+    toast('ลบระบบเรียบร้อย');
+  } catch(e) {
+    toast('ลบไม่สำเร็จ: '+e.message, 'error');
+  }
+}
+
+async function moveSys(id, dir){
+  const s = state.systems.find(x=>x.id===id);
+  if(!s) return;
+  const list = state.systems.filter(x=>x.groupId===s.groupId).sort((a,b)=>(a.order||0)-(b.order||0));
+  const idx = list.findIndex(x=>x.id===id);
+  const target = list[idx+dir];
+  if(!target) return;
+  const tmp = s.order||0;
+  s.order = target.order||0;
+  target.order = tmp;
+  persist.systems();
+  renderAdminTab('systems');
+  renderNav();
+  try {
+    await callGAS('updateSystemsOrder', state.systems);
+  } catch(e) {}
+}
+
+function openGrpForm(id){
+  state.editingGrp = id || null;
+  const g = id ? state.groups.find(x=>x.id===id) : null;
+  document.getElementById('grpFormTitle').textContent = id ? 'แก้ไขกลุ่มงาน' : 'เพิ่มกลุ่มงาน';
+  document.getElementById('gf_name').value = g?.name || '';
+  document.getElementById('gf_icon').value = g?.icon || 'fa-chart-line';
+  showEl('grpFormModal');
+}
+
+async function saveGroup(){
+  const name = document.getElementById('gf_name').value.trim();
+  const icon = document.getElementById('gf_icon').value;
+  if(!name){ toast('กรุณากรอกชื่อกลุ่ม','warning'); return; }
+
+  const btn = document.getElementById('btnSaveGrpSubmit');
+  btn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> กำลังบันทึก...';
+  btn.disabled = true;
+
+  const gItem = { id: state.editingGrp || uid(), name, icon };
+
+  try {
+    await callGAS('saveGroup', gItem);
+    if(state.editingGrp){
+      const idx = state.groups.findIndex(x=>x.id===state.editingGrp);
+      if(idx>=0) state.groups[idx] = gItem;
+    } else {
+      state.groups.push(gItem);
+    }
+    persist.groups();
+    hideEl('grpFormModal');
+    renderAdminTab('systems');
+    renderNav(); renderHomeStats();
+    toast('บันทึกกลุ่มงานลง Google Sheet สำเร็จ');
+  } catch(e) {
+    toast('บันทึกไม่สำเร็จ: '+e.message, 'error');
+  } finally {
+    btn.innerHTML = 'บันทึก'; btn.disabled = false;
+  }
+}
+
+async function deleteGroup(id){
+  if(!await confirmDelete('ลบกลุ่มงานนี้?','ระบบทั้งหมดในกลุ่มนี้จะถูกลบออกจาก Google Sheet ด้วย')) return;
+  try {
+    await callGAS('deleteGroup', { id });
+    state.groups = state.groups.filter(x=>x.id!==id);
+    state.systems = state.systems.filter(x=>x.groupId!==id);
+    persist.groups(); persist.systems();
+    renderAdminTab('systems');
+    renderNav(); renderHomeStats();
+    toast('ลบกลุ่มงานเรียบร้อย');
+  } catch(e) {
+    toast('ลบไม่สำเร็จ: '+e.message, 'error');
+  }
+}
+
+/* -------- Admin: Theme -------- */
+function renderAdminTheme(){
+  const t = state.theme;
+  const colorField = (label, key) => `
+    <div class="flex items-center gap-2 p-2 rounded-xl" style="background:var(--bg); border:1px solid var(--border);">
+      <input type="color" value="${t[key]}" oninput="updateThemeColor('${key}', this.value)" class="w-9 h-9 rounded-lg cursor-pointer" style="border:none; background:transparent;">
+      <div class="flex-1 min-w-0">
+        <p class="text-xs font-semibold">${label}</p>
+        <p class="text-[10px] font-mono" style="color:var(--muted);">${t[key]}</p>
+      </div>
+    </div>`;
+  return `<div class="mb-3 flex items-center justify-between">
+    <p class="text-sm" style="color:var(--muted);">ปรับแต่งสีทั้งระบบ (บันทึกใน Sheet: Settings)</p>
+    <div class="flex gap-2">
+      <button onclick="saveThemeToCloud()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold grad-btn"><i class="fa-solid fa-cloud"></i> บันทึกสีลงชีต</button>
+      <button onclick="resetTheme()" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold" style="background:var(--bg); border:1px solid var(--border);"><i class="fa fa-rotate-left"></i> รีเซ็ต</button>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div>
+      <p class="text-xs font-bold mb-2" style="color:var(--primary-dark);">สีหลัก (Primary)</p>
+      <div class="space-y-2">
+        ${colorField('สีหลัก','primary')}
+        ${colorField('สีหลักเข้ม','primaryDark')}
+        ${colorField('สีหลักอ่อน','primaryLight')}
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-bold mb-2" style="color:var(--secondary-dark);">สีรอง (Secondary)</p>
+      <div class="space-y-2">
+        ${colorField('สีรอง','secondary')}
+        ${colorField('สีรองเข้ม','secondaryDark')}
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-bold mb-2">โหมดสว่าง</p>
+      <div class="space-y-2">
+        ${colorField('พื้นหลัง','lightBg')}
+        ${colorField('การ์ด','lightCard')}
+        ${colorField('ตัวอักษร','lightText')}
+        ${colorField('ตัวอักษรรอง','lightMuted')}
+        ${colorField('เส้นขอบ','lightBorder')}
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-bold mb-2">โหมดมืด</p>
+      <div class="space-y-2">
+        ${colorField('พื้นหลัง','darkBg')}
+        ${colorField('การ์ด','darkCard')}
+        ${colorField('ตัวอักษร','darkText')}
+        ${colorField('ตัวอักษรรอง','darkMuted')}
+        ${colorField('เส้นขอบ','darkBorder')}
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-bold mb-2">Sidebar</p>
+      <div class="space-y-2">
+        ${colorField('พื้นหลัง (สว่าง)','sidebarLight')}
+        ${colorField('พื้นหลัง (มืด)','sidebarDark')}
+        ${colorField('ตัวอักษร (สว่าง)','sidebarTextLight')}
+        ${colorField('ตัวอักษร (มืด)','sidebarTextDark')}
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-bold mb-2">แท็บ</p>
+      <div class="space-y-2">
+        ${colorField('พื้นหลัง (สว่าง)','tabBgLight')}
+        ${colorField('พื้นหลัง (มืด)','tabBgDark')}
+        ${colorField('ตัวอักษร (สว่าง)','tabTextLight')}
+        ${colorField('ตัวอักษร (มืด)','tabTextDark')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateThemeColor(key, val){
+  state.theme[key] = val;
+  persist.theme();
+  applyTheme();
+  const p = event.target.parentElement.querySelector('.font-mono');
+  if(p) p.textContent = val;
+}
+
+async function saveThemeToCloud(){
+  try {
+    await callGAS('saveTheme', state.theme);
+    toast('บันทึกธีมลง Google Sheet สำเร็จ');
+  } catch(e) {
+    toast('บันทึกธีมไม่สำเร็จ: '+e.message, 'error');
+  }
+}
+
+async function resetTheme(){
+  state.theme = { ...DEFAULT_THEME };
+  persist.theme();
+  applyTheme();
+  renderAdminTab('theme');
+  try { await callGAS('saveTheme', state.theme); } catch(e){}
+  toast('รีเซ็ตธีมเรียบร้อย');
+}
+
+/* -------- Admin: Logo -------- */
+function renderAdminLogo(){
+  return `<div class="max-w-md mx-auto text-center">
+    <p class="text-sm mb-3" style="color:var(--muted);">อัปโหลดโลโก้โรงเรียน ไฟล์จะถูกบันทึกลงใน Google Drive Folder: 1ehgB_CLugTr96TwYLTbSISYyO4K5rGob</p>
+    <div class="w-40 h-40 mx-auto rounded-2xl overflow-hidden flex items-center justify-center mb-4 grad-btn shadow-md" id="logoPreviewBox">
+      ${state.logo ? `<img src="${esc(state.logo)}" class="w-full h-full object-contain">` : `<i class="fa-solid fa-school text-5xl text-white"></i>`}
+    </div>
+    <div class="flex gap-2 justify-center">
+      <label class="px-4 py-2.5 rounded-xl text-sm font-semibold grad-btn cursor-pointer flex items-center gap-2 shadow-sm" id="btnLogoUpload">
+        <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดโลโก้
+        <input type="file" accept="image/*" class="hidden" onchange="uploadLogoToDrive(this)">
+      </label>
+      ${state.logo?`<button onclick="removeLogo()" class="px-4 py-2.5 rounded-xl text-sm font-semibold" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-trash"></i> ลบ</button>`:''}
+    </div>
+    <p class="text-[11px] mt-3" style="color:var(--muted);">แนะนำรูปภาพไฟล์ PNG หรือ JPG พื้นหลังโปร่งใส</p>
+  </div>`;
+}
+
+async function uploadLogoToDrive(input){
+  const file = input.files[0];
+  if(!file) return;
+  const labelBtn = document.getElementById('btnLogoUpload');
+  const oldHTML = labelBtn.innerHTML;
+  labelBtn.innerHTML = '<i class="fa-solid fa-spinner spinner"></i> กำลังอัปโหลด...';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const res = await callGAS('uploadFile', {
+      base64: base64,
+      fileName: 'logo_' + file.name,
+      mimeType: file.type
+    });
+
+    if(res && res.success) {
+      state.logo = res.url;
+      persist.logo();
+      renderLogo();
+      renderAdminTab('logo');
+      await callGAS('saveLogo', { logo: res.url });
+      toast('อัปโหลดโลโก้ไปยัง Google Drive และบันทึกสำเร็จ!');
+    } else {
+      throw new Error(res?.error || 'Upload failed');
+    }
+  } catch(e) {
+    console.error(e);
+    toast('อัปโหลดโลโก้ไม่สำเร็จ: ' + e.message, 'error');
+  } finally {
+    labelBtn.innerHTML = oldHTML;
+    input.value = '';
+  }
+}
+
+async function removeLogo(){
+  if(!await confirmDelete('ลบโลโก้?','ระบบจะกลับไปใช้ไอคอนเริ่มต้น')) return;
+  state.logo = null;
+  persist.logo();
+  renderLogo();
+  renderAdminTab('logo');
+  try { await callGAS('saveLogo', { logo: '' }); } catch(e){}
+  toast('ลบโลโก้เรียบร้อย');
+}
+
+function renderLogo(){
+  const img = document.getElementById('logoImg');
+  const fb = document.getElementById('logoFallback');
+  if(state.logo){ img.src = state.logo; img.style.display = 'block'; fb.style.display = 'none'; }
+  else { img.style.display = 'none'; fb.style.display = 'block'; }
+}
+
+/* -------- Admin: Database Settings -------- */
+function renderAdminDB(){
+  const currentUrl = GAS_API_URL || LS.get('si_custom_api_url', '');
+  return `<div class="max-w-2xl mx-auto space-y-4">
+    <div class="card p-4" style="background:var(--bg); border:1px solid var(--border);">
+      <h3 class="font-bold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-table-cells text-emerald-600"></i> โครงสร้างฐานข้อมูล Google Sheets</h3>
+      <p class="text-xs mb-3" style="color:var(--muted);">ระบบได้แยกชีตสำหรับเก็บข้อมูลไว้อย่างเป็นระเบียบใน Google Sheets ดังนี้:</p>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <p class="font-bold text-emerald-600">1. Sheet "News"</p>
+          <p class="text-[11px] text-slate-500">เก็บข่าวสาร, ไฟล์แนบ, และรูปภาพ</p>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <p class="font-bold text-emerald-600">2. Sheet "Systems"</p>
+          <p class="text-[11px] text-slate-500">เก็บรายชื่อระบบ, ลิงก์ และลำดับ</p>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <p class="font-bold text-emerald-600">3. Sheet "Groups"</p>
+          <p class="text-[11px] text-slate-500">เก็บกลุ่มงานและไอคอนเมนู</p>
+        </div>
+        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <p class="font-bold text-emerald-600">4. Sheet "Settings"</p>
+          <p class="text-[11px] text-slate-500">เก็บโลโก้และชุดสีธีมทั้งหมด</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-4" style="background:var(--bg); border:1px solid var(--border);">
+      <h3 class="font-bold text-sm mb-2 flex items-center gap-2"><i class="fa-brands fa-google-drive text-amber-500"></i> โฟลเดอร์จัดเก็บไฟล์ Google Drive</h3>
+      <p class="text-xs text-slate-600 dark:text-slate-400">โฟลเดอร์ปลายทาง: <span class="font-mono bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-[11px]">1ehgB_CLugTr96TwYLTbSISYyO4K5rGob</span></p>
+      <p class="text-[11px] mt-1 text-slate-500">ไฟล์และรูปภาพทุกไฟล์ที่อัปโหลดจะถูกส่งไปยัง Google Drive Folder นี้โดยตรง</p>
+    </div>
+
+    <div class="card p-4" style="background:var(--bg); border:1px solid var(--border);">
+      <h3 class="font-bold text-sm mb-2 flex items-center gap-2"><i class="fa-solid fa-link text-blue-500"></i> การเชื่อมต่อ Google Apps Script Web App</h3>
+      <p class="text-xs mb-2" style="color:var(--muted);">หากท่านโฮสต์ไฟล์ <span class="font-mono font-bold">index.html</span> ไว้บน GitHub Pages ให้นำ Web App URL ที่ได้จากการ Deploy ใน Google Apps Script มากรอกที่นี่:</p>
+      <input id="inputCustomApiUrl" value="${esc(currentUrl)}" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 text-xs rounded-xl outline-none mb-3" style="background:var(--card); border:1px solid var(--border); color:var(--text);">
+      <div class="flex gap-2">
+        <button onclick="saveCustomApiUrl()" class="px-4 py-2 rounded-xl text-xs font-semibold grad-btn"><i class="fa-solid fa-floppy-disk"></i> บันทึก URL</button>
+        <button onclick="syncFromGoogleSheets(); toast('กำลังดึงข้อมูลล่าสุด...');" class="px-4 py-2 rounded-xl text-xs font-semibold" style="background:var(--card); border:1px solid var(--border);"><i class="fa-solid fa-arrows-rotate"></i> ซิงค์ข้อมูลใหม่</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveCustomApiUrl(){
+  const url = document.getElementById('inputCustomApiUrl').value.trim();
+  LS.set('si_custom_api_url', url);
+  toast('บันทึก API URL สำเร็จ ระบบกำลังเชื่อมต่อใหม่...');
+  syncFromGoogleSheets();
+}
+
+/* ==================== FILE UTILS ==================== */
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ==================== INIT ==================== */
+function init(){
+  applyTheme();
+  updateAuthUI();
+  renderLogo();
+  renderNav();
+  renderHomeStats();
+  renderNews();
+
+  // ดึงข้อมูลจริงจาก Google Sheets
+  syncFromGoogleSheets();
+
+  window.addEventListener('resize', ()=>{
+    if(window.innerWidth >= 1024){
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('sidebar').classList.remove('-translate-x-full');
+    }
+  });
+
+  if(window.innerWidth < 1024) document.getElementById('sidebar').classList.add('-translate-x-full');
+
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){
+      ['loginModal','helpModal','newsViewModal','newsFormModal','sysFormModal','grpFormModal','adminModal'].forEach(hideEl);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
