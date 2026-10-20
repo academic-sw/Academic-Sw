@@ -1305,15 +1305,38 @@ function renderAdminLogo(){
     <div class="w-48 h-48 mx-auto rounded-3xl overflow-hidden flex items-center justify-center mb-4 p-3 shadow-lg" id="logoPreviewBox" style="background:var(--card); border:2px dashed var(--border);">
       ${state.logo ? `<img src="${esc(state.logo)}" class="w-full h-full object-contain filter drop-shadow-md">` : `<div class="text-center"><i class="fa-solid fa-school text-5xl mb-2" style="color:var(--primary);"></i><p class="text-xs" style="color:var(--muted);">ยังไม่มีโลโก้</p></div>`}
     </div>
-    <div class="flex gap-2 justify-center">
+    <div class="flex gap-2 justify-center mb-4">
       <label class="px-4 py-2.5 rounded-xl text-sm font-semibold grad-btn cursor-pointer flex items-center gap-2 shadow-sm" id="btnLogoUpload">
-        <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดโลโก้
+        <i class="fa-solid fa-cloud-arrow-up"></i> อัปโหลดจากเครื่อง
         <input type="file" accept="image/*" class="hidden" onchange="uploadLogoToDrive(this)">
       </label>
-      ${state.logo?`<button onclick="removeLogo()" class="px-4 py-2.5 rounded-xl text-sm font-semibold" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-trash"></i> ลบ</button>`:''}
+      ${state.logo?`<button onclick="removeLogo()" class="px-4 py-2.5 rounded-xl text-sm font-semibold" style="background:#fee2e2; color:#dc2626;"><i class="fa fa-trash"></i> ลบโลโก้</button>`:''}
     </div>
-    <p class="text-[11px] mt-3" style="color:var(--muted);">แนะนำรูปภาพไฟล์ PNG หรือ JPG พื้นหลังโปร่งใส</p>
+
+    <div class="p-3 rounded-xl text-left" style="background:var(--bg); border:1px solid var(--border);">
+      <label class="text-xs font-semibold block mb-1">หรือระบุ URL รูปภาพโลโก้โดยตรง:</label>
+      <div class="flex gap-2">
+        <input id="inputLogoUrl" value="${esc(state.logo||'')}" placeholder="https://..." class="flex-1 px-3 py-2 text-xs rounded-xl outline-none" style="background:var(--card); border:1px solid var(--border); color:var(--text);">
+        <button onclick="saveLogoFromInput()" class="px-3.5 py-2 rounded-xl text-xs font-semibold grad-btn shrink-0">บันทึก URL</button>
+      </div>
+    </div>
+    <p class="text-[11px] mt-3" style="color:var(--muted);">แนะนำรูปภาพไฟล์ PNG หรือ JPG ขนาดจัตุรัส พื้นหลังโปร่งใส</p>
   </div>`;
+}
+
+async function saveLogoFromInput(){
+  const url = document.getElementById('inputLogoUrl').value.trim();
+  if(!url){ toast('กรุณาระบุ URL รูปภาพ','warning'); return; }
+  state.logo = url;
+  persist.logo();
+  renderLogo();
+  renderAdminTab('logo');
+  try {
+    await callGAS('saveLogo', { logo: url });
+    toast('บันทึกโลโก้ลงระบบเรียบร้อย!');
+  } catch(e){
+    toast('บันทึกไม่สำเร็จ: '+e.message, 'error');
+  }
 }
 
 async function uploadLogoToDrive(input){
@@ -1338,7 +1361,7 @@ async function uploadLogoToDrive(input){
       renderLogo();
       renderAdminTab('logo');
       
-      // บันทึกลง Google Sheet ทันที
+      // บันทึกลง Google Apps Script และ Google Sheet ทันที
       await callGAS('saveLogo', { logo: logoUrl });
       toast('อัปโหลดโลโก้ไปยัง Google Drive และบันทึกเรียบร้อย!');
     } else {
