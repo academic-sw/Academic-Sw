@@ -491,11 +491,16 @@ async function callGAS(action, data = {}) {
       body: JSON.stringify({ action, data })
     });
     const json = await res.json();
-    if (json.success) return json.data;
+    if (json.success) {
+      return (json.data !== undefined) ? json.data : json;
+    }
     throw new Error(json.error || 'Server error');
   }
 
-  // 3. หากยังไม่ได้ตั้งค่า API URL ให้ใช้ Local Cache และแจ้งเตือน
+  // 3. หากยังไม่ได้ตั้งค่า API URL ให้แจ้งเตือน
+  if (action === 'uploadFile') {
+    throw new Error('กรุณาระบุ Web App URL ในตัวแปร GAS_API_URL ก่อนอัปโหลดไฟล์');
+  }
   console.info('กำลังทำงานในโหมด Offline/LocalStorage (ยังไม่ได้ระบุ GAS_API_URL)');
   return null;
 }
@@ -906,7 +911,7 @@ async function uploadAttachment(fileNum, input){
       mimeType: file.type
     });
 
-    if(res && res.success) {
+    if(res && (res.success || res.url || res.viewUrl)) {
       document.getElementById('nf_f'+fileNum).value = res.viewUrl || res.url;
       toast(`อัปโหลดไฟล์ ${file.name} เข้า Google Drive สำเร็จ!`);
     } else {
@@ -937,8 +942,8 @@ async function uploadNewsImage(i, input){
       mimeType: file.type
     });
 
-    if(res && res.success) {
-      state.formImages[i] = res.url;
+    if(res && (res.success || res.url)) {
+      state.formImages[i] = res.url || res.viewUrl;
       renderNewsImages();
       toast('อัปโหลดรูปภาพเข้า Google Drive สำเร็จ!');
     } else {
@@ -1311,12 +1316,13 @@ async function uploadLogoToDrive(input){
       mimeType: file.type
     });
 
-    if(res && res.success) {
-      state.logo = res.url;
+    if(res && (res.success || res.url)) {
+      const logoUrl = res.url || res.viewUrl;
+      state.logo = logoUrl;
       persist.logo();
       renderLogo();
       renderAdminTab('logo');
-      await callGAS('saveLogo', { logo: res.url });
+      await callGAS('saveLogo', { logo: logoUrl });
       toast('อัปโหลดโลโก้ไปยัง Google Drive และบันทึกสำเร็จ!');
     } else {
       throw new Error(res?.error || 'Upload failed');
